@@ -3,7 +3,7 @@
   "rewrites": [
     {
       "source": "/api/:path*",
-      "destination": "https://code-a-nova-hackathon-portal.onrender.com/api/:path*"
+      "destination": "https://code-a-nova-hackathon-portal-h9ek.onrender.com/api/:path*"
     },
     {
       "source": "/(.*)",
