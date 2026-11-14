@@ -26,17 +26,22 @@ const hasConfiguredSmtpCredentials = () => {
  */
 const createTransporter = () => {
   if (hasConfiguredSmtpCredentials()) {
+    const user = process.env.EMAIL_USER.trim();
+    const pass = process.env.EMAIL_PASS.replace(/\s+/g, ''); // Strip any spaces from 16-char App Password
+
     return {
       isLiveSmtp: true,
       transporter: nodemailer.createTransport({
-        service: 'gmail',
+        host: 'smtp.gmail.com',
+        port: 465,
+        secure: true, // Use Port 465 with SSL for maximum reliability on cloud platforms
         auth: {
-          user: process.env.EMAIL_USER.trim(),
-          pass: process.env.EMAIL_PASS.trim(),
+          user,
+          pass,
         },
-        connectionTimeout: 7000, // 7 seconds connection timeout
-        greetingTimeout: 7000,
-        socketTimeout: 8000,   // 8 seconds socket timeout
+        connectionTimeout: 10000,
+        greetingTimeout: 10000,
+        socketTimeout: 10000,
       }),
     };
   }
