@@ -85,7 +85,11 @@ const signup = async (req, res, next) => {
       });
     }
 
-    await sendOtpEmail({ to: normalizedEmail, otp });
+    try {
+      await sendOtpEmail({ to: normalizedEmail, otp });
+    } catch (mailErr) {
+      console.error('[Auth] Failed to send OTP email:', mailErr.message);
+    }
 
     return res.status(201).json({
       success: true,
@@ -246,7 +250,11 @@ const resendOtp = async (req, res, next) => {
     user.lastOtpSentAt = new Date();
     await user.save();
 
-    await sendOtpEmail({ to: normalizedEmail, otp });
+    try {
+      await sendOtpEmail({ to: normalizedEmail, otp });
+    } catch (mailErr) {
+      console.error('[Auth] Failed to send OTP email:', mailErr.message);
+    }
 
     return res.status(200).json({
       success: true,

@@ -22,7 +22,7 @@ const hasConfiguredSmtpCredentials = () => {
 
 /**
  * Creates a Nodemailer transporter using Gmail SMTP when configured,
- * or a local JSON stream transport during development when .env still holds placeholders.
+ * with connection timeouts so requests never hang indefinitely.
  */
 const createTransporter = () => {
   if (hasConfiguredSmtpCredentials()) {
@@ -34,6 +34,9 @@ const createTransporter = () => {
           user: process.env.EMAIL_USER.trim(),
           pass: process.env.EMAIL_PASS.trim(),
         },
+        connectionTimeout: 7000, // 7 seconds connection timeout
+        greetingTimeout: 7000,
+        socketTimeout: 8000,   // 8 seconds socket timeout
       }),
     };
   }
@@ -92,25 +95,35 @@ const buildEmailLayout = ({ heading, bodyHtml }) => `
 `;
 
 /**
- * Dispatches an email and logs dev payload cleanly when SMTP credentials are still placeholders.
+ * Dispatches an email and safely catches timeouts or SMTP failures without crashing requests.
  */
 const dispatchMail = async (mailOptions, devSummary) => {
   const { isLiveSmtp, transporter } = createTransporter();
-  const info = await transporter.sendMail({
-    from: getFromHeader(),
-    ...mailOptions,
-  });
 
-  if (!isLiveSmtp) {
-    console.log('\n[Mailer:DevPreview] SMTP credentials are placeholders in server/.env.');
-    console.log(`[Mailer:DevPreview] To: ${mailOptions.to} | Subject: ${mailOptions.subject}`);
-    if (devSummary) {
-      console.log(`[Mailer:DevPreview] ${devSummary}`);
-    }
-    console.log('[Mailer:DevPreview] Set EMAIL_USER and EMAIL_PASS in server/.env for real Gmail delivery.\n');
+  if (devSummary) {
+    console.log(`\n[Mailer] Processing email to: ${mailOptions.to} (${devSummary})`);
   }
 
-  return { isLiveSmtp, messageId: info.messageId };
+  try {
+    const info = await transporter.sendMail({
+      from: getFromHeader(),
+      ...mailOptions,
+    });
+
+    if (isLiveSmtp) {
+      console.log(`[Mailer] Live email sent to ${mailOptions.to} (Message ID: ${info.messageId})`);
+    } else {
+      console.log('[Mailer:DevPreview] Live SMTP not configured. OTP printed above.');
+    }
+
+    return { isLiveSmtp, messageId: info.messageId, delivered: true };
+  } catch (err) {
+    console.error(`[Mailer Warning] SMTP delivery failed (${err.message}).`);
+    if (devSummary) {
+      console.log(`[Mailer Backup] ${devSummary}`);
+    }
+    return { isLiveSmtp: false, messageId: null, delivered: false, error: err.message };
+  }
 };
 
 /**
