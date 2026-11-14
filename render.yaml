@@ -27,3 +27,4 @@ services:
         sync: false
       - key: CONTACT_EMAIL
         value: contact@codeanova.dev
+

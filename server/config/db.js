@@ -25,15 +25,29 @@ const connectDatabase = async () => {
   const configuredUri = process.env.MONGO_URI;
 
   if (!isPlaceholderMongoUri(configuredUri)) {
-    const conn = await mongoose.connect(configuredUri.trim());
-    console.log(`[DB] Connected to MongoDB host: ${conn.connection.host}`);
-    return conn;
+    try {
+      const conn = await mongoose.connect(configuredUri.trim(), {
+        serverSelectionTimeoutMS: 10000,
+      });
+      console.log(`[DB] Connected to MongoDB host: ${conn.connection.host}`);
+      return conn;
+    } catch (err) {
+      console.error(`[DB Error] Could not connect to MongoDB Atlas: ${err.message}`);
+      console.error('[DB Tip] Please verify in MongoDB Atlas:');
+      console.error('         1. Database User username and password in MONGO_URI are correct.');
+      console.error('         2. In Network Access, IP 0.0.0.0/0 (allow from anywhere) is enabled.');
+      return null;
+    }
   }
 
   if (process.env.NODE_ENV === 'production') {
-    throw new Error(
-      'MONGO_URI must be configured with a valid MongoDB connection string in production.'
+    console.warn(
+      '[DB Warning] MONGO_URI is missing or contains placeholder values (<username>, <password>).'
     );
+    console.warn(
+      '[DB Warning] Please set a valid MONGO_URI in your Render environment variables.'
+    );
+    return null;
   }
 
   // Dev fallback: boot embedded MongoDB from devDependencies so local testing works without global mongod

@@ -3,14 +3,25 @@
   "version": "1.0.0",
   "private": true,
   "description": "Code-a-Nova National Collegiate Hackathon Portal",
+  "main": "server/server.js",
   "scripts": {
+    "start": "node server/server.js",
     "build": "npm --prefix client run build",
     "client:install": "npm --prefix client install",
     "client:dev": "npm --prefix client run dev",
     "client:build": "npm --prefix client run build",
     "server:install": "npm --prefix server install",
     "server:dev": "npm --prefix server run dev",
-    "server:start": "npm --prefix server start",
+    "server:start": "node server/server.js",
     "install:all": "npm --prefix client install && npm --prefix server install"
+  },
+  "dependencies": {
+    "bcrypt": "^5.1.1",
+    "cors": "^2.8.5",
+    "dotenv": "^16.4.7",
+    "express": "^4.21.2",
+    "jsonwebtoken": "^9.0.2",
+    "mongoose": "^8.9.5",
+    "nodemailer": "^6.10.0"
   }
 }

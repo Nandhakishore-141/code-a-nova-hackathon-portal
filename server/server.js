@@ -58,10 +58,15 @@ app.get('/', (req, res) => {
 
 // Health check endpoint for Render/Railway monitoring
 app.get('/api/health', (req, res) => {
+  const mongoose = require('mongoose');
+  const dbState = mongoose.connection.readyState;
+  const states = ['disconnected', 'connected', 'connecting', 'disconnecting'];
+
   res.status(200).json({
     success: true,
     service: 'Code-a-Nova Hackathon Portal API',
     status: 'healthy',
+    database: states[dbState] || 'unknown',
     timestamp: new Date().toISOString(),
   });
 });
@@ -77,9 +82,13 @@ app.use(errorHandler);
 
 const startServer = async () => {
   try {
-    await connectDatabase();
     const server = app.listen(port, '0.0.0.0', () => {
       console.log(`[Server] Code-a-Nova API running on port ${port}`);
+    });
+
+    // Connect to database without delaying port binding for Render health checks
+    connectDatabase().catch((err) => {
+      console.error('[DB] Connection error:', err.message);
     });
 
     const shutdown = async (signal) => {
