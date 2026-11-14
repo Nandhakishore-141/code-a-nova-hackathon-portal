@@ -85,16 +85,20 @@ const signup = async (req, res, next) => {
       });
     }
 
+    let mailResult = { delivered: false };
     try {
-      await sendOtpEmail({ to: normalizedEmail, otp });
+      mailResult = await sendOtpEmail({ to: normalizedEmail, otp });
     } catch (mailErr) {
       console.error('[Auth] Failed to send OTP email:', mailErr.message);
     }
 
     return res.status(201).json({
       success: true,
-      message: 'Account created. A 6-digit OTP has been sent to your email (valid for 10 minutes).',
+      message: mailResult?.delivered
+        ? 'Account created. A 6-digit OTP has been sent to your email (valid for 10 minutes).'
+        : `Account created. (Note: Render free tier blocks outbound SMTP. Your verification OTP is: ${otp})`,
       email: normalizedEmail,
+      devOtp: mailResult?.delivered ? undefined : otp,
     });
   } catch (error) {
     return next(error);
@@ -250,15 +254,19 @@ const resendOtp = async (req, res, next) => {
     user.lastOtpSentAt = new Date();
     await user.save();
 
+    let mailResult = { delivered: false };
     try {
-      await sendOtpEmail({ to: normalizedEmail, otp });
+      mailResult = await sendOtpEmail({ to: normalizedEmail, otp });
     } catch (mailErr) {
       console.error('[Auth] Failed to send OTP email:', mailErr.message);
     }
 
     return res.status(200).json({
       success: true,
-      message: 'A fresh 6-digit OTP has been sent to your email address.',
+      message: mailResult?.delivered
+        ? 'A fresh 6-digit OTP has been sent to your email address.'
+        : `A fresh OTP was generated. (Note: Render free tier blocks outbound SMTP. OTP: ${otp})`,
+      devOtp: mailResult?.delivered ? undefined : otp,
     });
   } catch (error) {
     return next(error);

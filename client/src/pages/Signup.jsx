@@ -68,7 +68,13 @@ const Signup = () => {
 
       const targetEmail = data.email || formData.email.trim().toLowerCase();
       sessionStorage.setItem(PENDING_OTP_EMAIL_KEY, targetEmail);
-      navigate('/verify-otp', { state: { email: targetEmail } });
+      navigate('/verify-otp', {
+        state: {
+          email: targetEmail,
+          devOtp: data.devOtp,
+          message: data.message,
+        },
+      });
     } catch (error) {
       setServerError(
         error.response?.data?.message || 'Unable to create your account. Please try again.'

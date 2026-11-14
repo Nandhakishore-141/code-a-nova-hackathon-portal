@@ -34,14 +34,14 @@ const createTransporter = () => {
       transporter: nodemailer.createTransport({
         host: 'smtp.gmail.com',
         port: 465,
-        secure: true, // Use Port 465 with SSL for maximum reliability on cloud platforms
+        secure: true, // Use Port 465 with SSL
         auth: {
           user,
           pass,
         },
-        connectionTimeout: 10000,
-        greetingTimeout: 10000,
-        socketTimeout: 10000,
+        connectionTimeout: 4000,
+        greetingTimeout: 4000,
+        socketTimeout: 4000,
       }),
     };
   }
@@ -52,6 +52,38 @@ const createTransporter = () => {
       jsonTransport: true,
     }),
   };
+};
+
+/**
+ * Sends an email via Resend HTTPS REST API (port 443).
+ * Render's free tier blocks SMTP ports (25, 465, 587), but port 443 HTTPS is always open.
+ */
+const sendViaResend = async ({ to, subject, html, text }) => {
+  const apiKey = process.env.RESEND_API_KEY?.trim();
+  if (!apiKey) return null;
+
+  const sender = process.env.RESEND_FROM?.trim() || `${SENDER_NAME} <onboarding@resend.dev>`;
+  const res = await fetch('https://api.resend.com/emails', {
+    method: 'POST',
+    headers: {
+      Authorization: `Bearer ${apiKey}`,
+      'Content-Type': 'application/json',
+    },
+    body: JSON.stringify({
+      from: sender,
+      to: [to],
+      subject,
+      html,
+      text,
+    }),
+  });
+
+  const data = await res.json();
+  if (!res.ok) {
+    throw new Error(data.message || `Resend error (${res.status})`);
+  }
+
+  return { isLiveSmtp: true, messageId: data.id, delivered: true };
 };
 
 /**
@@ -103,11 +135,25 @@ const buildEmailLayout = ({ heading, bodyHtml }) => `
  * Dispatches an email and safely catches timeouts or SMTP failures without crashing requests.
  */
 const dispatchMail = async (mailOptions, devSummary) => {
-  const { isLiveSmtp, transporter } = createTransporter();
-
   if (devSummary) {
     console.log(`\n[Mailer] Processing email to: ${mailOptions.to} (${devSummary})`);
   }
+
+  // 1. If RESEND_API_KEY is configured, send via Resend HTTPS REST API (Port 443 - never blocked by Render)
+  if (process.env.RESEND_API_KEY?.trim()) {
+    try {
+      const res = await sendViaResend(mailOptions);
+      if (res?.delivered) {
+        console.log(`[Mailer] Live email delivered via Resend API to ${mailOptions.to} (ID: ${res.messageId})`);
+        return res;
+      }
+    } catch (apiErr) {
+      console.warn(`[Mailer Warning] Resend API delivery failed (${apiErr.message}). Falling back to SMTP...`);
+    }
+  }
+
+  // 2. Otherwise attempt SMTP transporter (Gmail/custom SMTP)
+  const { isLiveSmtp, transporter } = createTransporter();
 
   try {
     const info = await transporter.sendMail({

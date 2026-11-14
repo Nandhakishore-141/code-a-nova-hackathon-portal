@@ -21,15 +21,25 @@ const OtpVerify = () => {
 
   const [email, setEmail] = useState(initialEmail);
   const [digits, setDigits] = useState(Array(OTP_LENGTH).fill(''));
+  const [devOtp, setDevOtp] = useState(location.state?.devOtp || '');
   const [expiryRemaining, setExpiryRemaining] = useState(OTP_VALIDITY_SECONDS);
   const [resendCooldown, setResendCooldown] = useState(0);
   const [errorMsg, setErrorMsg] = useState('');
-  const [statusMsg, setStatusMsg] = useState('');
+  const [statusMsg, setStatusMsg] = useState(location.state?.message || '');
   const [isVerifying, setIsVerifying] = useState(false);
   const [isResending, setIsResending] = useState(false);
   const [shakeTick, setShakeTick] = useState(0);
 
   const inputRefs = useRef([]);
+
+  const handleAutoFillOtp = (otpToFill) => {
+    const val = String(otpToFill || devOtp).trim();
+    if (val.length === OTP_LENGTH) {
+      setDigits(val.split(''));
+      setErrorMsg('');
+      inputRefs.current[OTP_LENGTH - 1]?.focus();
+    }
+  };
 
   useEffect(() => {
     if (expiryRemaining <= 0) return undefined;
@@ -166,6 +176,9 @@ const OtpVerify = () => {
     try {
       const { data } = await api.post('/auth/resend-otp', { email: email.trim() });
       setStatusMsg(data.message || 'A new 6-digit OTP has been sent to your email.');
+      if (data.devOtp) {
+        setDevOtp(data.devOtp);
+      }
       setDigits(Array(OTP_LENGTH).fill(''));
       setExpiryRemaining(OTP_VALIDITY_SECONDS);
       setResendCooldown(RESEND_COOLDOWN_SECONDS);
@@ -219,6 +232,35 @@ const OtpVerify = () => {
             >
               <CheckCircle2 className="mt-0.5 h-4 w-4 shrink-0" />
               <span>{statusMsg}</span>
+            </div>
+          )}
+
+          {devOtp && (
+            <div
+              role="region"
+              aria-label="Evaluation OTP helper"
+              className="animate-scale-in mt-5 rounded-lg border border-amber-300 bg-amber-50/90 p-4 shadow-sm"
+            >
+              <div className="flex items-center justify-between gap-2">
+                <span className="inline-flex items-center gap-1.5 text-xs font-bold uppercase tracking-wider text-amber-900">
+                  <span className="inline-block h-2 w-2 rounded-full bg-amber-500 animate-pulse" />
+                  Cloud Sandbox OTP Notice
+                </span>
+                <button
+                  type="button"
+                  onClick={() => handleAutoFillOtp(devOtp)}
+                  className="rounded-md border border-amber-300 bg-amber-200/90 px-2.5 py-1 text-xs font-semibold text-amber-950 transition hover:bg-amber-300 active:scale-95"
+                >
+                  Auto-fill {devOtp}
+                </button>
+              </div>
+              <p className="mt-2 text-xs leading-relaxed text-amber-800">
+                Render free tier firewall restricts outbound SMTP port 465. Your generated OTP is{' '}
+                <strong className="font-mono text-sm font-bold tracking-widest text-amber-950 bg-amber-200/60 px-1.5 py-0.5 rounded">
+                  {devOtp}
+                </strong>
+                . Click above to auto-fill or enter manually.
+              </p>
             </div>
           )}
 
