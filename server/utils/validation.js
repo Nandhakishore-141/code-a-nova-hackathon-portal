@@ -34,13 +34,32 @@ const isValidIndianMobile = (value) => {
 };
 
 /**
- * Validates an HTTP or HTTPS URL.
+ * Normalizes user-entered URLs so that if 'https://' or 'http://' is omitted,
+ * it is automatically prepended without burdening the user.
+ */
+const normalizeUrl = (value) => {
+  if (typeof value !== 'string') return '';
+  const trimmed = value.trim();
+  if (!trimmed) return '';
+  if (/^https?:\/\//i.test(trimmed)) {
+    return trimmed;
+  }
+  return `https://${trimmed}`;
+};
+
+/**
+ * Validates an HTTP or HTTPS URL (with or without leading http(s):// scheme).
  */
 const isValidHttpUrl = (value) => {
   if (typeof value !== 'string' || !value.trim()) return false;
+  const normalized = normalizeUrl(value);
   try {
-    const parsed = new URL(value.trim());
-    return parsed.protocol === 'http:' || parsed.protocol === 'https:';
+    const parsed = new URL(normalized);
+    return (
+      (parsed.protocol === 'http:' || parsed.protocol === 'https:') &&
+      parsed.hostname.includes('.') &&
+      parsed.hostname.length >= 3
+    );
   } catch {
     return false;
   }
@@ -64,6 +83,7 @@ module.exports = {
   isValidFullName,
   isValidIndianMobile,
   isValidHttpUrl,
+  normalizeUrl,
   escapeHtml,
 };
 

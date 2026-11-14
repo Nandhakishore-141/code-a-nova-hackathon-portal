@@ -17,7 +17,7 @@ import {
 } from 'lucide-react';
 import api from '../api/axiosInstance';
 import { useAuth } from '../context/AuthContext';
-import { isValidFullName, isValidIndianMobile } from '../utils/validators';
+import { isValidFullName, isValidIndianMobile, normalizeUrl } from '../utils/validators';
 
 const Dashboard = () => {
   const { user: authUser, updateUserState } = useAuth();
@@ -513,7 +513,7 @@ const Dashboard = () => {
                   </h3>
                   <div className="mt-2.5 flex flex-wrap gap-2.5">
                     <a
-                      href={registration.pptLink}
+                      href={normalizeUrl(registration.pptLink)}
                       target="_blank"
                       rel="noreferrer"
                       className="btn-secondary py-1.5 text-xs"
@@ -522,7 +522,7 @@ const Dashboard = () => {
                       <ExternalLink className="h-3.5 w-3.5" />
                     </a>
                     <a
-                      href={registration.prototypeLink}
+                      href={normalizeUrl(registration.prototypeLink)}
                       target="_blank"
                       rel="noreferrer"
                       className="btn-secondary py-1.5 text-xs"
@@ -532,7 +532,7 @@ const Dashboard = () => {
                     </a>
                     {registration.demoVideoLink && (
                       <a
-                        href={registration.demoVideoLink}
+                        href={normalizeUrl(registration.demoVideoLink)}
                         target="_blank"
                         rel="noreferrer"
                         className="btn-secondary py-1.5 text-xs"

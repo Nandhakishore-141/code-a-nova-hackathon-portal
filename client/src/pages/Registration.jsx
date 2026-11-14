@@ -22,6 +22,7 @@ import {
   isValidFullName,
   isValidHttpUrl,
   isValidIndianMobile,
+  normalizeUrl,
 } from '../utils/validators';
 
 const Registration = () => {
@@ -163,13 +164,13 @@ const Registration = () => {
       nextErrors.projectName = 'Project name must be at least 5 characters long.';
     }
     if (!isValidHttpUrl(formData.pptLink)) {
-      nextErrors.pptLink = 'Enter a valid shareable URL (https://...) for your PPT.';
+      nextErrors.pptLink = 'Enter a valid shareable link for your PPT (e.g. drive.google.com/...).';
     }
     if (!isValidHttpUrl(formData.prototypeLink)) {
-      nextErrors.prototypeLink = 'Enter a valid URL (https://...) for your prototype.';
+      nextErrors.prototypeLink = 'Enter a valid prototype or repository link (e.g. github.com/...).';
     }
     if (formData.demoVideoLink.trim() && !isValidHttpUrl(formData.demoVideoLink)) {
-      nextErrors.demoVideoLink = 'Enter a valid URL (https://...) or leave Demo Video Link blank.';
+      nextErrors.demoVideoLink = 'Enter a valid video link (e.g. youtube.com/...) or leave blank.';
     }
 
     const seenEmails = new Set([formData.email.trim().toLowerCase()]);
@@ -214,9 +215,9 @@ const Registration = () => {
         yearOfStudy: formData.yearOfStudy,
         domain: formData.domain,
         projectName: formData.projectName.trim(),
-        pptLink: formData.pptLink.trim(),
-        prototypeLink: formData.prototypeLink.trim(),
-        demoVideoLink: formData.demoVideoLink.trim(),
+        pptLink: normalizeUrl(formData.pptLink),
+        prototypeLink: normalizeUrl(formData.prototypeLink),
+        demoVideoLink: formData.demoVideoLink.trim() ? normalizeUrl(formData.demoVideoLink) : '',
         teamSize: formData.teamSize,
         teamMembers: formData.teamMembers.map((m) => ({
           memberName: m.memberName.trim(),
@@ -674,10 +675,10 @@ const Registration = () => {
                 <input
                   id="reg-pptLink"
                   name="pptLink"
-                  type="url"
+                  type="text"
                   value={formData.pptLink}
                   onChange={handleFieldChange}
-                  placeholder="https://drive.google.com/file/d/..."
+                  placeholder="drive.google.com/file/d/... or https://..."
                   className={`input-field mt-1.5 ${errors.pptLink ? 'input-error' : ''}`}
                 />
                 {errors.pptLink && <p className="mt-1 text-xs text-red-600">{errors.pptLink}</p>}
@@ -694,10 +695,10 @@ const Registration = () => {
                 <input
                   id="reg-prototypeLink"
                   name="prototypeLink"
-                  type="url"
+                  type="text"
                   value={formData.prototypeLink}
                   onChange={handleFieldChange}
-                  placeholder="https://github.com/team/project"
+                  placeholder="github.com/team/project or https://..."
                   className={`input-field mt-1.5 ${errors.prototypeLink ? 'input-error' : ''}`}
                 />
                 {errors.prototypeLink && (
@@ -712,10 +713,10 @@ const Registration = () => {
                 <input
                   id="reg-demoVideoLink"
                   name="demoVideoLink"
-                  type="url"
+                  type="text"
                   value={formData.demoVideoLink}
                   onChange={handleFieldChange}
-                  placeholder="https://youtube.com/watch?v=..."
+                  placeholder="youtube.com/watch?v=... or https://..."
                   className={`input-field mt-1.5 ${errors.demoVideoLink ? 'input-error' : ''}`}
                 />
                 {errors.demoVideoLink && (

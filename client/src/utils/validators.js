@@ -15,11 +15,26 @@ export const isValidFullName = (value) => {
 export const isValidIndianMobile = (value) =>
   typeof value === 'string' && INDIAN_MOBILE_REGEX.test(value.trim());
 
+export const normalizeUrl = (value) => {
+  if (typeof value !== 'string') return '';
+  const trimmed = value.trim();
+  if (!trimmed) return '';
+  if (/^https?:\/\//i.test(trimmed)) {
+    return trimmed;
+  }
+  return `https://${trimmed}`;
+};
+
 export const isValidHttpUrl = (value) => {
   if (typeof value !== 'string' || !value.trim()) return false;
+  const normalized = normalizeUrl(value);
   try {
-    const url = new URL(value.trim());
-    return url.protocol === 'http:' || url.protocol === 'https:';
+    const url = new URL(normalized);
+    return (
+      (url.protocol === 'http:' || url.protocol === 'https:') &&
+      url.hostname.includes('.') &&
+      url.hostname.length >= 3
+    );
   } catch {
     return false;
   }

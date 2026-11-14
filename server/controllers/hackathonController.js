@@ -6,6 +6,7 @@ const {
   isValidEmail,
   isValidIndianMobile,
   isValidHttpUrl,
+  normalizeUrl,
 } = require('../utils/validation');
 const { sendRegistrationConfirmationEmail } = require('../utils/mailer');
 
@@ -95,14 +96,14 @@ const registerHackathon = async (req, res, next) => {
     if (!isValidHttpUrl(pptLink)) {
       return res.status(400).json({
         success: false,
-        message: 'Please provide a valid URL for the PPT link.',
+        message: 'Please provide a valid link for the PPT (e.g. drive.google.com/...).',
       });
     }
 
     if (!isValidHttpUrl(prototypeLink)) {
       return res.status(400).json({
         success: false,
-        message: 'Please provide a valid URL for the Prototype link.',
+        message: 'Please provide a valid link for the Prototype (e.g. github.com/...).',
       });
     }
 
@@ -110,7 +111,7 @@ const registerHackathon = async (req, res, next) => {
     if (cleanedDemoLink && !isValidHttpUrl(cleanedDemoLink)) {
       return res.status(400).json({
         success: false,
-        message: 'Demo video link must be a valid URL when provided.',
+        message: 'Demo video link must be a valid link when provided (e.g. youtube.com/...).',
       });
     }
 
@@ -183,9 +184,9 @@ const registerHackathon = async (req, res, next) => {
       yearOfStudy: String(yearOfStudy).trim(),
       domain: String(domain).trim(),
       projectName: String(projectName).trim(),
-      pptLink: String(pptLink).trim(),
-      prototypeLink: String(prototypeLink).trim(),
-      demoVideoLink: cleanedDemoLink,
+      pptLink: normalizeUrl(pptLink),
+      prototypeLink: normalizeUrl(prototypeLink),
+      demoVideoLink: cleanedDemoLink ? normalizeUrl(cleanedDemoLink) : '',
       teamSize: parsedTeamSize,
       teamMembers: sanitizedMembers,
     });
